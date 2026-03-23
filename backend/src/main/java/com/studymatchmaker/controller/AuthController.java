@@ -1,47 +1,32 @@
 package com.studymatchmaker.controller;
 
-import com.studymatchmaker.dto.*;
-import com.studymatchmaker.model.User;
-import com.studymatchmaker.security.JwtService;
+import com.studymatchmaker.dto.AuthResponse;
+import com.studymatchmaker.dto.LoginRequest;
+import com.studymatchmaker.dto.RegisterRequest;
 import com.studymatchmaker.service.AuthService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
-    private final JwtService jwtService;
-
-    // THIS constructor must assign both variables
-    public AuthController(AuthService authService, JwtService jwtService) {
-        this.authService = authService;
-        this.jwtService = jwtService;
-    }
 
     @PostMapping("/register")
-    public String register(@RequestBody User user) {
-
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
-        }
-
-        // 🔥 IMPORTANT: encode password
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        userRepository.save(user);
-
-        return "User registered successfully";
+    public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
+        return authService.register(request);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-
-        User user = authService.authenticate(request);
-
-        String token = jwtService.generateToken(user.getEmail());
-
-        return ResponseEntity.ok(new AuthResponse(token));
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+        return authService.login(request);
     }
+
+
 }

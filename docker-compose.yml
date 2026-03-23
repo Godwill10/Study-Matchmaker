@@ -1,15 +1,15 @@
 services:
-  db:
+  postgres:
     image: postgres:16
-    container_name: study_matchmaker_db
+    container_name: studymatchmaker-postgres
     environment:
-      POSTGRES_DB: study_matchmaker
-      POSTGRES_USER: sm_user
-      POSTGRES_PASSWORD: sm_password
+      POSTGRES_DB: studymatchmaker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
-      - sm_pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  sm_pgdata:
+  postgres_data:

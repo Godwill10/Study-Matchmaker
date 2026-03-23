@@ -16,23 +16,9 @@ public class MatchResponse {
         this.score = score;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getTopic() {
-        return topic;
-    }
-
-    public String getLevel() {
-        return level;
-    }
-
-    public String getMode() {
-        return mode;
-    }
-
-    public int getScore() {
-        return score;
-    }
+    public Long getId() { return id; }
+    public String getTopic() { return topic; }
+    public String getLevel() { return level; }
+    public String getMode() { return mode; }
+    public int getScore() { return score; }
 }

@@ -1,32 +1,16 @@
 package com.studymatchmaker.dto;
 
+import lombok.Data;
+
+import java.util.Set;
+
+@Data
 public class MatchRequest {
-
-    private String topic;
-    private String level;
-    private String mode;
-
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
-
-    public String getLevel() {
-        return level;
-    }
-
-    public void setLevel(String level) {
-        this.level = level;
-    }
-
-    public String getMode() {
-        return mode;
-    }
-
-    public void setMode(String mode) {
-        this.mode = mode;
-    }
+    private String school;
+    private Set<String> courses;
+    private String preferredMode;
+    private String studyStyle;
+    private Boolean requireVisibleLocation;
+    private String city;
+    private String state;
 }

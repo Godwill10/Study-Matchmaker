@@ -1,9 +1,15 @@
 package com.studymatchmaker.exception;
 
+import lombok.Builder;
+import lombok.Data;
+
 import java.time.LocalDateTime;
 
-public record ApiError(
-        LocalDateTime timestamp,
-        String path,
-        String message
-) {}
+@Data
+@Builder
+public class ApiError {
+    private LocalDateTime timestamp;
+    private int status;
+    private String error;
+    private String message;
+}
