@@ -1,0 +1,16 @@
+{
+  "name": "study-matchmaker",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "install:frontend": "npm --prefix frontend install",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "dev:backend": "./backend/mvnw -f backend/pom.xml spring-boot:run",
+    "build:backend": "./backend/mvnw -f backend/pom.xml -DskipTests compile",
+    "dev": "concurrently -k -n backend,frontend \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

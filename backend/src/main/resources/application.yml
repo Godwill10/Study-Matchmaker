@@ -1,23 +1,21 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:studymatchmaker
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/studymatchmaker}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
-
-  h2:
-    console:
-      enabled: true
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 app:
   jwt:
-    secret: ThisIsASecretKeyThatIsAtLeast32CharactersLong123!
+    secret: ${JWT_SECRET:ThisIsASecretKeyThatIsAtLeast32CharactersLong123!}
     expiration-ms: 86400000
