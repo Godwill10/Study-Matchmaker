@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+backend/target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Compiled JS from TS config
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# Maven wrapper (optional, already in repo)
+!backend/.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+*.log
