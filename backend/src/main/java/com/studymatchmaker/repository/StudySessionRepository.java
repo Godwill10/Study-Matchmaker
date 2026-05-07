@@ -13,15 +13,47 @@ public interface StudySessionRepository extends JpaRepository<StudySession, Long
 
     List<StudySession> findByHostOrderByStartTimeDesc(User host);
 
-    @Query("SELECT s FROM StudySession s WHERE :user MEMBER OF s.participants ORDER BY s.startTime DESC")
-    List<StudySession> findByParticipant(@Param("user") User user);
+    @Query("""
+            SELECT DISTINCT s
+            FROM StudySession s
+            JOIN s.participants p
+            WHERE p.id = :userId
+            ORDER BY s.startTime DESC
+            """)
+    List<StudySession> findByParticipantId(@Param("userId") Long userId);
 
-    @Query("SELECT s FROM StudySession s WHERE s.status = 'UPCOMING' AND s.startTime > :now ORDER BY s.startTime ASC")
+    @Query("""
+            SELECT s
+            FROM StudySession s
+            WHERE s.status = com.studymatchmaker.model.StudySession.Status.UPCOMING
+              AND s.startTime > :now
+            ORDER BY s.startTime ASC
+            """)
     List<StudySession> findUpcoming(@Param("now") LocalDateTime now);
 
-    @Query("SELECT s FROM StudySession s WHERE s.status = 'UPCOMING' AND s.startTime > :now AND s.host IN :hosts ORDER BY s.startTime ASC")
-    List<StudySession> findUpcomingByHosts(@Param("hosts") List<User> hosts, @Param("now") LocalDateTime now);
+    @Query("""
+            SELECT s
+            FROM StudySession s
+            WHERE s.status = com.studymatchmaker.model.StudySession.Status.UPCOMING
+              AND s.startTime > :now
+              AND s.host.id IN :hostIds
+            ORDER BY s.startTime ASC
+            """)
+    List<StudySession> findUpcomingByHostIds(
+            @Param("hostIds") List<Long> hostIds,
+            @Param("now") LocalDateTime now
+    );
 
-    @Query("SELECT s FROM StudySession s WHERE (s.host = :user OR :user MEMBER OF s.participants) AND s.startTime > :now ORDER BY s.startTime ASC")
-    List<StudySession> findMyUpcoming(@Param("user") User user, @Param("now") LocalDateTime now);
+    @Query("""
+            SELECT DISTINCT s
+            FROM StudySession s
+            LEFT JOIN s.participants p
+            WHERE s.startTime > :now
+              AND (s.host.id = :userId OR p.id = :userId)
+            ORDER BY s.startTime ASC
+            """)
+    List<StudySession> findMyUpcomingByUserId(
+            @Param("userId") Long userId,
+            @Param("now") LocalDateTime now
+    );
 }

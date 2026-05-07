@@ -25,6 +25,15 @@ public class StudySessionController {
         return sessionService.create(resolveUser(principal), request);
     }
 
+    @PutMapping("/{id}")
+    public StudySessionDto update(
+            Principal principal,
+            @PathVariable Long id,
+            @Valid @RequestBody CreateSessionRequest request
+    ) {
+        return sessionService.update(resolveUser(principal), id, request);
+    }
+
     @GetMapping("/upcoming")
     public List<StudySessionDto> upcoming(Principal principal) {
         return sessionService.getUpcoming(resolveUser(principal));

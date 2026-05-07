@@ -8,13 +8,17 @@ import com.studymatchmaker.model.StudySession;
 import com.studymatchmaker.model.User;
 import com.studymatchmaker.repository.FriendshipRepository;
 import com.studymatchmaker.repository.StudySessionRepository;
+import com.studymatchmaker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +26,7 @@ public class StudySessionService {
 
     private final StudySessionRepository sessionRepository;
     private final FriendshipRepository friendshipRepository;
+    private final UserRepository userRepository;
     private final MapperService mapperService;
 
     @Transactional
@@ -30,8 +35,33 @@ public class StudySessionService {
             throw new BadRequestException("Start time must be in the future");
         }
 
+        int maxParticipants = request.getMaxParticipants() > 0 ? request.getMaxParticipants() : 10;
+        Set<User> invitedFriends = new HashSet<>();
+
+        if (request.getInvitedFriendIds() != null && !request.getInvitedFriendIds().isEmpty()) {
+            if (request.getInvitedFriendIds().size() + 1 > maxParticipants) {
+                throw new BadRequestException("Invited friends exceed the maximum participant limit");
+            }
+
+            for (Long friendId : request.getInvitedFriendIds()) {
+                if (friendId.equals(host.getId())) {
+                    throw new BadRequestException("You cannot invite yourself");
+                }
+
+                if (!friendshipRepository.areFriendsByIds(host.getId(), friendId)) {
+                    throw new BadRequestException("You can only invite people you are connected with");
+                }
+
+                User friend = userRepository.findById(friendId)
+                        .orElseThrow(() -> new BadRequestException("Invited friend not found"));
+
+                invitedFriends.add(friend);
+            }
+        }
+
         StudySession session = StudySession.builder()
                 .host(host)
+                .participants(invitedFriends)
                 .title(request.getTitle())
                 .course(request.getCourse())
                 .topic(request.getTopic())
@@ -40,10 +70,45 @@ public class StudySessionService {
                 .endTime(request.getEndTime())
                 .location(request.getLocation())
                 .mode(request.getMode())
-                .maxParticipants(request.getMaxParticipants() > 0 ? request.getMaxParticipants() : 10)
+                .maxParticipants(maxParticipants)
                 .build();
 
         return toDto(sessionRepository.save(session), host);
+    }
+
+    @Transactional
+    public StudySessionDto update(User user, Long sessionId, CreateSessionRequest request) {
+        StudySession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("Session not found"));
+
+        if (!session.getHost().getId().equals(user.getId())) {
+            throw new BadRequestException("Only the host can edit this session");
+        }
+
+        if (session.getStatus() != StudySession.Status.UPCOMING) {
+            throw new BadRequestException("Only upcoming sessions can be edited");
+        }
+
+        if (request.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Start time must be in the future");
+        }
+
+        int maxParticipants = request.getMaxParticipants() > 0 ? request.getMaxParticipants() : 10;
+        if (maxParticipants < session.getCurrentParticipantCount()) {
+            throw new BadRequestException("Max participants cannot be less than the current participant count");
+        }
+
+        session.setTitle(request.getTitle());
+        session.setCourse(request.getCourse());
+        session.setTopic(request.getTopic());
+        session.setDescription(request.getDescription());
+        session.setStartTime(request.getStartTime());
+        session.setEndTime(request.getEndTime());
+        session.setLocation(request.getLocation());
+        session.setMode(request.getMode());
+        session.setMaxParticipants(maxParticipants);
+
+        return toDto(sessionRepository.save(session), user);
     }
 
     @Transactional
@@ -55,7 +120,7 @@ public class StudySessionService {
             throw new BadRequestException("You are the host of this session");
         }
 
-        if (!friendshipRepository.areFriends(user, session.getHost())) {
+        if (!friendshipRepository.areFriendsByIds(user.getId(), session.getHost().getId())) {
             throw new BadRequestException("You can only join sessions from your connections");
         }
 
@@ -107,17 +172,23 @@ public class StudySessionService {
 
     @Transactional(readOnly = true)
     public List<StudySessionDto> getUpcoming(User currentUser) {
-        List<User> friends = friendshipRepository.findFriendUsers(currentUser);
-        List<User> visibleHosts = new ArrayList<>(friends);
-        visibleHosts.add(currentUser);
-        return sessionRepository.findUpcomingByHosts(visibleHosts, LocalDateTime.now()).stream()
+        List<User> friends = friendshipRepository.findFriendUsersByUserId(currentUser.getId());
+        List<Long> visibleHostIds = new ArrayList<>(
+                friends.stream()
+                        .map(User::getId)
+                        .toList()
+        );
+        visibleHostIds.add(currentUser.getId());
+
+        return sessionRepository.findUpcoming(LocalDateTime.now()).stream()
+                .filter(s -> visibleHostIds.contains(s.getHost().getId()))
                 .map(s -> toDto(s, currentUser))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<StudySessionDto> getMySessions(User currentUser) {
-        return sessionRepository.findMyUpcoming(currentUser, LocalDateTime.now()).stream()
+        return sessionRepository.findMyUpcomingByUserId(currentUser.getId(), LocalDateTime.now()).stream()
                 .map(s -> toDto(s, currentUser))
                 .toList();
     }

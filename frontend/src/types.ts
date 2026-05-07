@@ -70,3 +70,16 @@ export interface StudySessionDto {
   isParticipant: boolean;
   isFull: boolean;
 }
+
+export interface MessageDto {
+  id: number;
+  sender: UserProfile;
+  receiver: UserProfile;
+  content: string;
+  createdAt: string;
+}
+
+export interface SendMessageRequest {
+  receiverId: number;
+  content: string;
+}

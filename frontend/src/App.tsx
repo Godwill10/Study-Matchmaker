@@ -9,6 +9,7 @@ import StudentProfile from './pages/StudentProfile';
 import Profile from './pages/Profile';
 import Network from './pages/Network';
 import Schedule from './pages/Schedule';
+import Messages from './pages/Messages';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
       <Route path="/people" element={<ProtectedRoute><People /></ProtectedRoute>} />
       <Route path="/people/:id" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
       <Route path="/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
+      <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       <Route path="/network" element={<ProtectedRoute><Network /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
