@@ -38,6 +38,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [incomingRequests, setIncomingRequests] = useState(0);
 
   const stored = localStorage.getItem('user');
   const user: UserProfile | null = stored ? JSON.parse(stored) : null;
@@ -52,13 +53,27 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           .catch(() => setUnreadMessages(0));
     };
 
+    const loadIncomingRequests = () => {
+      void API.get<{ count: number }>('/connections/requests/count')
+          .then((res) => setIncomingRequests(res.data.count))
+          .catch(() => setIncomingRequests(0));
+    };
+
     loadUnreadMessages();
-    const interval = window.setInterval(loadUnreadMessages, 30000);
+    loadIncomingRequests();
+
+    const interval = window.setInterval(() => {
+      loadUnreadMessages();
+      loadIncomingRequests();
+    }, 30000);
+
     window.addEventListener('messages-read', loadUnreadMessages);
+    window.addEventListener('requests-read', loadIncomingRequests);
 
     return () => {
       window.clearInterval(interval);
       window.removeEventListener('messages-read', loadUnreadMessages);
+      window.removeEventListener('requests-read', loadIncomingRequests);
     };
   }, [location.pathname]);
 
@@ -88,7 +103,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
           <nav className="sidebar-nav">
             <div className="sidebar-section-title">Menu</div>
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.map((item) => {
+              const bubbleCount =
+                  item.to === '/messages'
+                      ? unreadMessages
+                      : item.to === '/network'
+                          ? incomingRequests
+                          : 0;
+
+              return (
                 <Link
                     key={item.to}
                     to={item.to}
@@ -97,7 +120,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   <item.icon />
                   <span style={{ flex: 1 }}>{item.label}</span>
-                  {item.to === '/messages' && unreadMessages > 0 && (
+                  {bubbleCount > 0 && (
                       <span
                           style={{
                             minWidth: 22,
@@ -113,11 +136,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                             padding: '0 6px',
                           }}
                       >
-                  {unreadMessages > 99 ? '99+' : unreadMessages}
-                </span>
+                        {bubbleCount > 99 ? '99+' : bubbleCount}
+                      </span>
                   )}
                 </Link>
-            ))}
+              );
+            })}
           </nav>
 
           <div className="sidebar-footer">

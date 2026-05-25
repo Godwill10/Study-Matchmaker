@@ -69,6 +69,8 @@ public class User implements UserDetails {
     private String state;
     private Double latitude;
     private Double longitude;
+
+    @Column(columnDefinition = "TEXT")
     private String profileImageUrl;
 
     @Builder.Default

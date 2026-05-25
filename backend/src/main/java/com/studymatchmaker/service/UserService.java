@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 
@@ -52,8 +53,25 @@ public class UserService {
     @Transactional
     public UserProfileDto uploadProfilePicture(Principal principal, MultipartFile file) {
         User user = getRequiredUser(principal);
-        user.setProfileImageUrl(file == null || file.isEmpty() ? null : file.getOriginalFilename());
-        return mapperService.toUserProfile(userRepository.save(user));
+
+        try {
+            if (file == null || file.isEmpty()) {
+                user.setProfileImageUrl(null);
+            } else {
+                String contentType = file.getContentType();
+
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    throw new IllegalArgumentException("Only image files are allowed");
+                }
+
+                String encodedImage = Base64.getEncoder().encodeToString(file.getBytes());
+                user.setProfileImageUrl("data:" + contentType + ";base64," + encodedImage);
+            }
+
+            return mapperService.toUserProfile(userRepository.save(user));
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to upload profile picture", ex);
+        }
     }
 
     @Transactional(readOnly = true)
